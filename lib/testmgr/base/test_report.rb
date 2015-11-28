@@ -19,6 +19,7 @@ class TestReport
   attr_accessor :drugUnderTest
   attr_accessor :worksheet_under_test
   attr_accessor :req_list
+  attr_accessor :requirements
   attr_accessor :test_patient
   attr_accessor :patient_class_file
   attr_accessor :patient_worksheet    # Worksheet name from patient-class XLS file
@@ -30,6 +31,7 @@ class TestReport
     @description=""
     @test_list = []
     @req_list = []
+    @requirements=[]
     @environment_under_test=:qa
     @id_under_test=nil
     @patient_worksheet=nil
@@ -213,6 +215,18 @@ class TestReport
     TestUtils.setDefaultBrowser(bType)
   end
 
+  def getReq(req)
+    @requirements.each do |r|
+      if r.get_name==req
+        return r
+      end
+    end
+    return nil
+  end
+
+  def addRequirement(req)
+    @requirements << Testmgr::TestComposite.new(req)
+  end
 
   def addReq(r)
     @req_list << r.to_s
@@ -280,6 +294,14 @@ class TestReport
     puts __FILE__ + (__LINE__).to_s + " == exit execute() =="
   end
 
+
+  def report()
+    puts "\n\n== Test Report ==\n"
+
+    @requirements.each do |r|
+      r.print
+    end
+  end
 
   def generateReport()
     endTest()
