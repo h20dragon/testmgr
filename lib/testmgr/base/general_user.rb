@@ -3,9 +3,9 @@ class GeneralUser
   attr_accessor :login_id, :login_password, :role
 
   def initialize
-    @login_id='lsmith@test.com'
-    @login_password='1qaz@WSX'
-    @role='PrescriberAgent'
+    @login_id=''
+    @login_password=''
+    @role=''
   end
 
   def setLoginPassword(s=nil)

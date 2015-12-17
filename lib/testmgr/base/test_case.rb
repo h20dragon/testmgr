@@ -1,4 +1,5 @@
 
+# TestCase consists of 0 or more assertions.
 
 module Testmgr
 
@@ -89,6 +90,19 @@ module Testmgr
       end
 
       rc
+    end
+
+    def totalAssertions()
+      @assertions.length
+    end
+
+    def failed?
+      !passed?
+    end
+
+    def passed?
+      _rc=calcResult()
+      !_rc.nil? && _rc
     end
 
     def print
