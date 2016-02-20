@@ -25,6 +25,8 @@ module Testmgr
     end
 
     def add(rc, desc)
+
+      puts __FILE__ + (__LINE__).to_s + " TestCase.add(#{rc}, #{desc})"
       @assertions << { :rc => rc, :description => desc }
 
       if rc.nil?
@@ -106,7 +108,7 @@ module Testmgr
     end
 
     def print
-      s="[requirement - #{parent.name}]:#{@test_id} - #{@description.to_s} : #{calcResult().to_s}"
+      s="[requirement - #{parent.name}]:#{@test_id} - #{@description.to_s} : #{@metrics[:passed]}/#{@metrics[:total]} passed: #{calcResult().to_s}"
 
       if @id
         s += ":#{@id}"
@@ -119,6 +121,7 @@ module Testmgr
       end
 
       puts s
+      s
     end
 
   end
