@@ -7,6 +7,22 @@ describe Testmgr do
     expect(Testmgr::VERSION).not_to be nil
   end
 
+  describe('Dynamic add req') do
+    it 'should add req is missing' do
+      Testmgr::TestReport.instance.setDescription('add req test')
+      Testmgr::TestReport.instance.getReq('Dynamic Req')
+
+      t = Testmgr::TestReport.instance.getReq('Dynamic Req')
+
+      puts __FILE__ + (__LINE__).to_s + " t => #{t.class.to_s}"
+
+      expect(t.instance_of?(Testmgr::TestComposite))
+
+      tc = Testmgr::TestReport.instance.getReq('Dynamic Req').testcase('Peter')
+      expect(tc.instance_of?(Testmgr::TestCase))
+    end
+  end
+
   it 'should set description' do
     s=Testmgr::TestReport.instance.setDescription('Peter')
     expect(true)
@@ -25,6 +41,29 @@ describe Testmgr do
     req.print
     puts "RESULT => " + req.getResult().to_s
     puts '-' * 72
+  end
+
+  it 'get nonexisting Req' do
+    req=Testmgr::TestReport.instance.getReq('XYZ-123')
+    expect(req.nil?)
+  end
+
+  it 'should create dynamically' do
+    Testmgr::TestReport.instance.addRequirement('REQ-ABC')
+    req=Testmgr::TestReport.instance.getReq('REQ-ABC')
+    expect(req.instance_of?(Testmgr::TestComposite))
+
+    Testmgr::TestReport.instance.getReq('REQ-ABC').add(Testmgr::TestCase.new('visible_when', "Dynamic"))
+
+    tc = Testmgr::TestReport.instance.getReq('REQ-ABC').tc('visible_when').add(true, 'Must be true')
+    expect(tc.instance_of?(Testmgr::TestCase))
+
+
+    Testmgr::TestReport.instance.getReq('REQ-ABC').tc('visible_when').add(false, 'Must be false')
+
+    Testmgr::TestReport.instance.report()
+
+
   end
 
 
@@ -70,6 +109,35 @@ describe Testmgr do
 
 
   end
+
+
+
+end
+
+describe 'Verify TestCase object' do
+
+  it 'test case with 1 assertion should pass' do
+    req = Testmgr::TestComposite.new("Req-999")
+
+    tc = Testmgr::TestCase.new("TC_000", "User must provide valid password to login")
+    tc.add(true, 'Passed assertion #1 added')
+
+    req.add(tc)
+    expect(tc.passed? && tc.totalAssertions()==1)
+  end
+
+
+  it 'test case with 1 passing and 1 failingn assertion should fail' do
+    req = Testmgr::TestComposite.new("Req-1000")
+
+    tc = Testmgr::TestCase.new("TC_000", "User must provide valid password to login")
+    tc.add(true, 'Passed assertion #1 added')
+    tc.add(false, 'Failed assertion #2 added')
+
+    req.add(tc)
+    expect(tc.failed? && tc.totalAssertions()==2)
+  end
+
 
 
 end
