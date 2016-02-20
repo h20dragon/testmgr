@@ -71,10 +71,26 @@ module Testmgr
 
     def print
      # puts __FILE__ + (__LINE__).to_s + " -- print( #{@name} ) --"
+      puts "REQ : #{@name} : #{@sub_tasks.length.to_s} test cases."
       @sub_tasks.each do |task|
      #   puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
         task.print
       end
+    end
+
+    def tc(name)
+      child(name)
+    end
+
+    def testcase(name)
+      tc=child(name)
+
+      if tc.nil?
+        _tc = Testmgr::TestCase.new(name, name)
+        tc=add(_tc)
+      end
+
+      tc
     end
 
     def child(name)
@@ -96,6 +112,11 @@ module Testmgr
 
     def get_child(name)
       _c=child(name)
+
+      if _c.nil?
+        _c=testcase(name)
+      end
+
     #  puts __FILE__ + (__LINE__).to_s + " FOUND => #{_c.class.to_s} " + _c.name if _c
       _c
     end
