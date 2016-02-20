@@ -20,9 +20,8 @@ class TestReport
   attr_accessor :worksheet_under_test
   attr_accessor :req_list
   attr_accessor :requirements
-  attr_accessor :test_patient
-  attr_accessor :patient_class_file
-  attr_accessor :patient_worksheet    # Worksheet name from patient-class XLS file
+
+
 
   attr_accessor :generalUser
 
@@ -34,11 +33,12 @@ class TestReport
     @requirements=[]
     @environment_under_test=:qa
     @id_under_test=nil
-    @patient_worksheet=nil
-    @patient_class_file='c:/tmp/patient-class.xls'
+    @tStart=Time.now
+
+
     @webApp=nil
     @generalUser=GeneralUser.new()
-    @test_patient={}
+
     @moxywidgets={}
   end
 
@@ -86,8 +86,6 @@ class TestReport
   end
 
 
-
-
   def setWebApp(w)
     puts __FILE__ + (__LINE__).to_s + " setWebApp(#{w.class.to_s})"
     @webApp=w
@@ -124,16 +122,9 @@ class TestReport
     @id_under_test
   end
 
-  def getPatientClassFile()
-    @patient_class_file
-  end
 
-  def setPatientClassFile(f)
-    if !f.nil?
-      @patient_class_file=f.to_s
-    end
-    @patient_class_file
-  end
+
+
 
   def setLoginId(s=nil)
     puts __FILE__ + (__LINE__).to_s + " setLoginId(#{s.to_s})"
@@ -152,13 +143,9 @@ class TestReport
     @worksheet_under_test=s
   end
 
-  def setPatientWorkSheet(s)
-    @patient_worksheet=s
-  end
 
-  def getPatientWorkSheet()
-    @patient_worksheet
-  end
+
+
 
   def getWorkSheet()
     @worksheet_under_test
@@ -191,9 +178,9 @@ class TestReport
   # => :prod
   def setEnvironment(e=:qa, url=nil)
     env={
-        :qa   => { :name => 'QA',   :description => 'QA Env',  :url => 'https://ww0.drfirst.com'   },
-        :qa2  => { :name => 'QA2',  :description => 'QA2 Env', :url => 'https://qa2-187-1001.qa.drfirst.com/login.jsp' },
-        :cert => { :name => 'CERT', :description => 'CERT',    :url => 'https://cert.drfirst.com' }
+        :qa   => { :name => 'QA',   :description => 'QA Env',  :url => 'https://www.qa.com'   },
+        :qa2  => { :name => 'QA2',  :description => 'QA2 Env', :url => 'https://www.qa2.com' },
+        :prod => { :name => 'PROD', :description => 'CERT',    :url => 'https://www.prod.com' }
     }
 
 
@@ -215,13 +202,16 @@ class TestReport
     TestUtils.setDefaultBrowser(bType)
   end
 
+  # if the requirement doesn't exist, then add it.
   def getReq(req)
     @requirements.each do |r|
       if r.get_name==req
         return r
       end
     end
-    return nil
+
+    addRequirement(req).last
+  #  return nil
   end
 
   def addRequirement(req)
@@ -343,7 +333,7 @@ class TestReport
     puts "Start/End  : #{@tStart.to_s}" + " / #{@tEnd.to_s}"
     elapsed_time=time_diff_milli(@tStart)
     puts "Elapsed time : #{elapsed_time.to_s} msec."
-    puts "\n\nTest Result : #{final_result.to_s}"
+    puts "\n\nT*** Test Result : #{final_result.to_s} ***"
   end
 
 end
