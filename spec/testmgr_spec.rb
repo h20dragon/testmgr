@@ -141,3 +141,21 @@ describe 'Verify TestCase object' do
 
 
 end
+
+describe 'Current Req' do
+
+  it 'should be set default' do
+    Testmgr::TestReport.instance.setDescription('add req test')
+    Testmgr::TestReport.instance.getReq('Dynamic Req')
+
+    req = Testmgr::TestReport.instance.getCurrentReq()
+
+    expect(req.to_s).to eq('__TBD__')
+  end
+
+  it 'should set current req' do
+    tc = Testmgr::TestReport.instance.setCurrentReq("TBD")
+    puts "tc : #{tc}"
+  end
+
+end
