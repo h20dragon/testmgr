@@ -318,10 +318,16 @@ class TestReport
 
     asserts_metrics={:passed => 0, :failed => 0, :skipped => 0, :total => 0, :result => nil}
 
-    tc_metrics = {:passed => 0, :failed => 0, :skipped => 0, :total => 0, :result => nil}
+    tc_metrics = {:passed => 0, :failed => 0, :skipped => 0, :total => 0 }
+
+    rq_metrics = {:passed => 0, :failed => 0, :skipped => 0, :total => 0 }
+
+    rc=true
 
     @requirements.each do |r|
       puts "#{r.class.to_s}"
+
+      rq_metrics[:total]+=1
 
       if r.is_a?(Testmgr::TestComposite)
         _m=r.getMetrics
@@ -340,11 +346,22 @@ class TestReport
       else
         puts "Unhandled : #{r.class.to_s}"
       end
+
+      if _passed?(tc_metrics)
+        rq_metrics[:passed]+=1
+      else
+        rq_metrics[:failed]+=1
+      end
+
+
     end
+
+    rc = rq_metrics[:failed] == 0 && tc_metrics[:failed] && asserts_metrics[:failed]==0
+
 
     asserts_metrics[:result] = _passed?(asserts_metrics)
 
-    { :assertions => asserts_metrics, :testcases => tc_metrics }
+    { :rc => rc, :assertions => asserts_metrics, :testcases => tc_metrics, :requirements => rq_metrics }
   end
 
   def generateReport()
