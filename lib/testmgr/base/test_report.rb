@@ -13,6 +13,7 @@ class TestReport
   attr_accessor :completed
   attr_accessor :description
   attr_accessor :environment_under_test
+  attr_accessor :host
   attr_accessor :tStart, :tEnd
   attr_accessor :test_list
   attr_accessor :browser_under_test
@@ -29,6 +30,7 @@ class TestReport
 
   def initialize()
     @verbose=false
+    @host=""
     @description=""
     @current_rec = { :req => DEFAULT_REQ, :tc => DEFAULT_REQ}
     @test_list = []
@@ -186,6 +188,14 @@ class TestReport
     @data_under_test
   end
 
+
+  def getHost()
+    @host
+  end
+  def setHost(u)
+    @host=u
+  end
+
   # Environments
   # => :qa
   # => :cert
@@ -214,7 +224,7 @@ class TestReport
 
   def setBrowserUnderTest(bType=:firefox)
     @browser_under_test=bType
-    TestUtils.setDefaultBrowser(bType)
+#   TestUtils.setDefaultBrowser(bType)
   end
 
   # if the requirement doesn't exist, then add it.
@@ -308,13 +318,17 @@ class TestReport
     end
   end
 
+  def _skipped?(metrics)
+    metrics[:total] == 0 && metrics[:passed] == 0 && metrics[:failed] == 0
+  end
+
   def _passed?(metrics)
     metrics[:total] > 0 && metrics[:passed] > 0 && metrics[:failed] == 0
   end
 
 
   def getMetrics()
-    puts "\n\n== Test Metrics ==\n"
+    puts "\n\n== Test Metrics ==\n" if Testmgr::TestReport.instance.verbose
 
     asserts_metrics={:passed => 0, :failed => 0, :skipped => 0, :total => 0, :result => nil}
 
@@ -325,7 +339,7 @@ class TestReport
     rc=true
 
     @requirements.each do |r|
-      puts "#{r.class.to_s}"
+      puts "#{r.class.to_s}" if Testmgr::TestReport.instance.verbose
 
       rq_metrics[:total]+=1
 
@@ -337,7 +351,9 @@ class TestReport
 
 
         tc_metrics[:total]+=r.totalTestCases()
-        if _passed?(_m)
+        if _skipped?(_m)
+          tc_metrics[:skipped]+=1
+        elsif _passed?(_m)
           tc_metrics[:passed]+=1
         else
           tc_metrics[:failed]+=1
@@ -356,12 +372,18 @@ class TestReport
 
     end
 
-    rc = rq_metrics[:failed] == 0 && tc_metrics[:failed] && asserts_metrics[:failed]==0
+    rc = rq_metrics[:failed] == 0 && tc_metrics[:failed] == 0 && asserts_metrics[:failed]==0
 
 
     asserts_metrics[:result] = _passed?(asserts_metrics)
 
-    { :rc => rc, :assertions => asserts_metrics, :testcases => tc_metrics, :requirements => rq_metrics }
+    { :rc => rc,
+      :host => getHost(),
+      :assertions => asserts_metrics,
+      :testcases => tc_metrics, :requirements => rq_metrics,
+      :device => @browser_under_test.to_s,
+      :start => @tStart
+    }
   end
 
   def generateReport()
@@ -405,6 +427,8 @@ class TestReport
     elapsed_time=time_diff_milli(@tStart)
     puts "Elapsed time : #{elapsed_time.to_s} msec."
     puts "\n\nT*** Test Result : #{final_result.to_s} ***"
+
+    final_result
   end
 
 end

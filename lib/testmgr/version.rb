@@ -1,3 +1,3 @@
 module Testmgr
-  VERSION = "0.3.0.pre"
+  VERSION = "0.3.2.pre"
 end
