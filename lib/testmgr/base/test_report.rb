@@ -8,26 +8,31 @@ module Testmgr
 class TestReport
   include Singleton
 
-  attr_accessor :webApp
+  DEFAULT_REQ='__TBD__'
+
   attr_accessor :completed
   attr_accessor :description
   attr_accessor :environment_under_test
+  attr_accessor :host
   attr_accessor :tStart, :tEnd
   attr_accessor :test_list
   attr_accessor :browser_under_test
   attr_accessor :data_under_test
-  attr_accessor :drugUnderTest
   attr_accessor :worksheet_under_test
   attr_accessor :req_list
   attr_accessor :requirements
 
+  attr_accessor :current_rec
 
-
+  attr_accessor :verbose
   attr_accessor :generalUser
 
+
   def initialize()
-    puts 'TestReport.initialize()'
+    @verbose=false
+    @host=""
     @description=""
+    @current_rec = { :req => DEFAULT_REQ, :tc => DEFAULT_REQ}
     @test_list = []
     @req_list = []
     @requirements=[]
@@ -36,10 +41,51 @@ class TestReport
     @tStart=Time.now
 
 
-    @webApp=nil
     @generalUser=GeneralUser.new()
+  end
 
-    @moxywidgets={}
+  def verbose
+    @verbose
+  end
+
+  def enableVerbose
+    @verbose=true
+  end
+
+  def disableVerbose
+    @verbose=false
+  end
+
+  def setCurrentReq(_r=DEFAULT_REQ)
+    @current_rec[:req]=_r
+  end
+
+  def setCurrentRequirement(_r=DEFAULT_REQ)
+    setReq(_r)
+  end
+
+  def getCurrentReq()
+    @current_rec[:req]
+  end
+
+  def getCurrentRequirement()
+    getReq()
+  end
+
+  def getCurrentTC()
+    @current_rec[:tc]
+  end
+
+  def getCurrentTestCase()
+    getTC()
+  end
+
+  def setCurrentTC(_t=DEFAULT_REQ)
+    @current_rec[:tc]=_t
+  end
+
+  def setCurrentTestCase(_t=DEFAULT_REQ)
+    setTC(_t)
   end
 
   def setDescription(s)
@@ -60,36 +106,11 @@ class TestReport
 
     @tStart=Time.now()
     @completed=false
-
-#    options=TestUtils.parseOptions()
-
-
-
-#    TestReport.instance.setEnvironment(options[:env].to_sym, options[:url])
-#    TestReport.instance.setBrowserUnderTest(options[:browser].to_sym)
-#    TestReport.instance.setDataUnderTest(options[:dut])
-#    TestReport.instance.setWorkSheet(options[:worksheet])
-    #TestReport.instance.setPatientWorkSheet(options[:patient_worksheet])
-#    @id_under_test=options[:id]
-    # GeneralUser
-#    TestReport.instance.setLoginPassword(options[:password])
-#    TestReport.instance.setLoginId(options[:userid])
-
-#   TestReport.instance.setPatientClassFile(options[:patient_class_file])
   end
 
   ##
   # START Commands
   ##
-
-  def webApp()
-  end
-
-
-  def setWebApp(w)
-    puts __FILE__ + (__LINE__).to_s + " setWebApp(#{w.class.to_s})"
-    @webApp=w
-  end
 
 
   ##
@@ -123,11 +144,7 @@ class TestReport
   end
 
 
-
-
-
   def setLoginId(s=nil)
-    puts __FILE__ + (__LINE__).to_s + " setLoginId(#{s.to_s})"
     @generalUser.setLoginId(s)
   end
 
@@ -171,6 +188,14 @@ class TestReport
     @data_under_test
   end
 
+
+  def getHost()
+    @host
+  end
+  def setHost(u)
+    @host=u
+  end
+
   # Environments
   # => :qa
   # => :cert
@@ -199,7 +224,7 @@ class TestReport
 
   def setBrowserUnderTest(bType=:firefox)
     @browser_under_test=bType
-    TestUtils.setDefaultBrowser(bType)
+#   TestUtils.setDefaultBrowser(bType)
   end
 
   # if the requirement doesn't exist, then add it.
@@ -234,7 +259,7 @@ class TestReport
       TestUtils.hitKey(__FILE__ + (__LINE__).to_s + " Test Fail : #{description.to_s}- HIT KEY")
     end
 
-    puts __FILE__ + (__LINE__).to_s + " #{description.to_s} : #{rc.to_s}"
+    puts __FILE__ + (__LINE__).to_s + " #{description.to_s} : #{rc.to_s}" if @verbose
     @test_list.push({ :rc => rc, :description => description})
     rc
   end
@@ -252,12 +277,12 @@ class TestReport
   def execute(procs)
 
     begin
-      puts __FILE__ + (__LINE__).to_s + " == execute() =="
+      puts __FILE__ + (__LINE__).to_s + " == execute() ==" if @verbose
 
       if procs.has_key?(:setup)
         procs[:setup].call
       else
-        puts __FILE__ + (__LINE__).to_s + " | execute default setup()"
+        puts __FILE__ + (__LINE__).to_s + " | execute default setup()" if @verbose
         TestReport.instance.setup
       end
 
@@ -281,7 +306,7 @@ class TestReport
 
     end
 
-    puts __FILE__ + (__LINE__).to_s + " == exit execute() =="
+    puts __FILE__ + (__LINE__).to_s + " == exit execute() ==" if @verbose
   end
 
 
@@ -291,6 +316,74 @@ class TestReport
     @requirements.each do |r|
       r.print
     end
+  end
+
+  def _skipped?(metrics)
+    metrics[:total] == 0 && metrics[:passed] == 0 && metrics[:failed] == 0
+  end
+
+  def _passed?(metrics)
+    metrics[:total] > 0 && metrics[:passed] > 0 && metrics[:failed] == 0
+  end
+
+
+  def getMetrics()
+    puts "\n\n== Test Metrics ==\n" if Testmgr::TestReport.instance.verbose
+
+    asserts_metrics={:passed => 0, :failed => 0, :skipped => 0, :total => 0, :result => nil}
+
+    tc_metrics = {:passed => 0, :failed => 0, :skipped => 0, :total => 0 }
+
+    rq_metrics = {:passed => 0, :failed => 0, :skipped => 0, :total => 0 }
+
+    rc=true
+
+    @requirements.each do |r|
+      puts "#{r.class.to_s}" if Testmgr::TestReport.instance.verbose
+
+      rq_metrics[:total]+=1
+
+      if r.is_a?(Testmgr::TestComposite)
+        _m=r.getMetrics
+        asserts_metrics[:total]  += _m[:total]
+        asserts_metrics[:passed] += _m[:passed]
+        asserts_metrics[:failed] += _m[:failed]
+
+
+        tc_metrics[:total]+=r.totalTestCases()
+        if _skipped?(_m)
+          tc_metrics[:skipped]+=1
+        elsif _passed?(_m)
+          tc_metrics[:passed]+=1
+        else
+          tc_metrics[:failed]+=1
+        end
+
+      else
+        puts "Unhandled : #{r.class.to_s}"
+      end
+
+      if _passed?(tc_metrics)
+        rq_metrics[:passed]+=1
+      else
+        rq_metrics[:failed]+=1
+      end
+
+
+    end
+
+    rc = rq_metrics[:failed] == 0 && tc_metrics[:failed] == 0 && asserts_metrics[:failed]==0
+
+
+    asserts_metrics[:result] = _passed?(asserts_metrics)
+
+    { :rc => rc,
+      :host => getHost(),
+      :assertions => asserts_metrics,
+      :testcases => tc_metrics, :requirements => rq_metrics,
+      :device => @browser_under_test.to_s,
+      :start => @tStart
+    }
   end
 
   def generateReport()
@@ -326,14 +419,16 @@ class TestReport
     puts "Failed : #{failed.to_s}/#{nAsserts.to_s}"
     puts "Completed : #{@completed.to_s}"
     puts "Browser: #{@browser_under_test.to_s}"
-    puts "Env    : #{@environment_under_test[:name].to_s}"
-    puts "URL    : " + @environment_under_test[:url].to_s
-    puts "Login  : " + getLoginId().to_s
-    puts "DUT    : " + @data_under_test.to_s
+#    puts "Env    : #{@environment_under_test[:name].to_s}"
+#    puts "URL    : " + @environment_under_test[:url].to_s
+#    puts "Login  : " + getLoginId().to_s
+#    puts "DUT    : " + @data_under_test.to_s
     puts "Start/End  : #{@tStart.to_s}" + " / #{@tEnd.to_s}"
     elapsed_time=time_diff_milli(@tStart)
     puts "Elapsed time : #{elapsed_time.to_s} msec."
     puts "\n\nT*** Test Result : #{final_result.to_s} ***"
+
+    final_result
   end
 
 end

@@ -24,9 +24,13 @@ module Testmgr
       @metrics[:total] > 0 && @metrics[:passed] > 0 && @metrics[:failed]==0
     end
 
+    def getMetrics()
+      @metrics
+    end
+
     def add(rc, desc)
 
-      puts __FILE__ + (__LINE__).to_s + " TestCase.add(#{rc}, #{desc})"
+      puts __FILE__ + (__LINE__).to_s + " TestCase.add(#{rc}, #{desc})" if Testmgr::TestReport.instance.verbose
       @assertions << { :rc => rc, :description => desc }
 
       if rc.nil?

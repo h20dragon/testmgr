@@ -60,6 +60,10 @@ module Testmgr
       @sub_tasks.each { |task| time += task.get_time_required }
     end
 
+    def totalTestCases()
+      @sub_tasks.length
+    end
+
     def getResult()
       rc=true
       @sub_tasks.each do |task|
@@ -76,6 +80,23 @@ module Testmgr
      #   puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
         task.print
       end
+    end
+
+    def getMetrics()
+      m={:passed => 0, :failed => 0, :skipped => 0, :total => 0}
+      @sub_tasks.each do |t|
+        if t.is_a?(Testmgr::TestCase)
+          _m = t.getMetrics()
+          m[:total] += _m[:total]
+          m[:passed] += _m[:passed]
+          m[:failed] += _m[:failed]
+          m[:skipped] += _m[:skipped]
+        else
+          puts __FILE__ + (__LINE__).to_s + " Unsure here."
+        end
+      end
+
+      m
     end
 
     def tc(name)
