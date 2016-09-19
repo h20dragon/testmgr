@@ -31,7 +31,7 @@ module Testmgr
     def add(rc, desc)
 
       puts __FILE__ + (__LINE__).to_s + " TestCase.add(#{rc}, #{desc})" if Testmgr::TestReport.instance.verbose
-      @assertions << { :rc => rc, :description => desc }
+      @assertions << { :rc => rc, :description => desc, :time => Time.now }
 
       if rc.nil?
         @metrics[:skipped]+=1
@@ -126,6 +126,48 @@ module Testmgr
 
       puts s
       s
+    end
+
+
+    def junitReport(className, doc)
+      tapPrint(className, doc)
+    end
+
+    # JUNIT
+    def tapPrint(className, doc, formatType='JUNIT')
+
+    #  s="[requirement - #{parent.name}]:#{@test_id} - #{@description.to_s} : #{@metrics[:passed]}/#{@metrics[:total]} passed: #{calcResult().to_s}"
+    #  if @id
+    #    s += ":#{@id}"
+    #  end
+
+      i=0
+      @assertions.each do |a|
+    #   s += "\n  #{i}. " + a[:description].to_s + " : " + a[:rc].to_s
+
+        ts = Nokogiri::XML::Node.new('testcase', doc)
+        ts.set_attribute('classname', "#{className}.#{@test_id}")
+        ts.set_attribute('name', a[:description])
+        ts.set_attribute('time', a[:time])
+
+        if a[:rc].nil?
+          skipped=Nokogiri::XML::Node.new('skipped', ts)
+          ts.add_child(skipped)
+        elsif !a[:rc]
+          failed=Nokogiri::XML::Node.new('failure', ts)
+          failed.set_attribute('message', "test failure")
+          failed.content="Assertion failed"
+          ts.add_child(failed)
+        elsif a[:rc]
+          # Passed
+        else
+          raise "UNKNOWN_CLASS_Type: #{a}"
+        end
+
+        doc.root.add_child(ts)
+        i+=1
+      end
+
     end
 
   end
