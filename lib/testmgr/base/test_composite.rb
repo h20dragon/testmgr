@@ -90,12 +90,18 @@ module Testmgr
 
       # puts "TAP.REQ : #{@name} : #{@sub_tasks.length.to_s} test cases."
 
+      ts = Nokogiri::XML::Node.new('testsuite', doc)
+      ts['name']=className
+      ts['tests']=getMetrics()[:total]
+
+      doc.root.add_child(ts)
+
       @sub_tasks.each do |task|
       #  puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
 
         if task.is_a?(Testmgr::TestCase)
-          node=task.tapPrint(className, doc)
- #         doc.root.add_child(node)
+          node=task.tapPrint(className, ts)
+      #    ts.root.add_child(node)
         else
           raise "ExpectedTestCase"
         end
