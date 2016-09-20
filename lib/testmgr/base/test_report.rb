@@ -1,6 +1,8 @@
 
 require 'singleton'
 
+require 'nokogiri'
+
 #require 'general_user'
 
 module Testmgr
@@ -309,7 +311,6 @@ class TestReport
     puts __FILE__ + (__LINE__).to_s + " == exit execute() ==" if @verbose
   end
 
-
   def report()
     puts "\n\n== Test Report ==\n"
 
@@ -317,6 +318,49 @@ class TestReport
       r.print
     end
   end
+
+
+  def junitReport(fullPath=nil)
+    rc=nil
+
+    doc = Nokogiri::XML("<testsuites></testsuites>")
+
+    @requirements.each do |r|
+
+      if r.is_a?(Testmgr::TestComposite)
+
+        metrics = r.getMetrics()
+
+        # m={:passed => 0, :failed => 0, :skipped => 0, :total => 0}
+#        puts __FILE__ + (__LINE__).to_s + " <testsuite name=\"#{r.get_name}\" errors=\"#{metrics[:failed]}\"  total=\"#{metrics[:total]}\" >"
+        r.tapPrint(doc)
+      else
+        raise "WhatIsThis"
+      end
+
+    end
+
+    if fullPath.nil?
+      rc=doc.to_s
+    elsif fullPath.is_a?(String)
+
+      begin
+        open(fullPath, 'w') do |f|
+          f << doc.to_s
+        end
+
+        rc=true
+
+      rescue Errno::ENOENT => ex
+        puts "Exception: Testmgr::TestReport.tapReport - #{ex.class}"
+        puts ex.backtrace
+      end
+
+    end
+
+    rc
+  end
+
 
   def _skipped?(metrics)
     metrics[:total] == 0 && metrics[:passed] == 0 && metrics[:failed] == 0

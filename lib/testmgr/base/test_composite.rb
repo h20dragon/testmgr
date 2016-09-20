@@ -73,12 +73,39 @@ module Testmgr
       rc
     end
 
+
     def print
-     # puts __FILE__ + (__LINE__).to_s + " -- print( #{@name} ) --"
+      # puts __FILE__ + (__LINE__).to_s + " -- print( #{@name} ) --"
       puts "REQ : #{@name} : #{@sub_tasks.length.to_s} test cases."
       @sub_tasks.each do |task|
-     #   puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
+        #   puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
         task.print
+      end
+    end
+
+    def tapPrint(doc)
+     # puts __FILE__ + (__LINE__).to_s + " -- print( #{@name} ) --"
+
+      className=@name
+
+      # puts "TAP.REQ : #{@name} : #{@sub_tasks.length.to_s} test cases."
+
+      ts = Nokogiri::XML::Node.new('testsuite', doc)
+      ts['name']=className
+      ts['tests']=getMetrics()[:total]
+
+      doc.root.add_child(ts)
+
+      @sub_tasks.each do |task|
+      #  puts __FILE__ + (__LINE__).to_s + " ** #{task.class.to_s} **"
+
+        if task.is_a?(Testmgr::TestCase)
+          node=task.tapPrint(className, ts)
+      #    ts.root.add_child(node)
+        else
+          raise "ExpectedTestCase"
+        end
+
       end
     end
 

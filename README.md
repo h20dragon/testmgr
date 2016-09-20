@@ -22,7 +22,14 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Testmgr::TestReport.instance.setDescription("My Example")
+Testmgr::TestReport.instance.getReq('New Req').get_child('Login').add(true, "This is a passing assertion")
+Testmgr::TestReport.instance.getReq('New Req').get_child('Login').add(false, "This is a failed assertion")
+Testmgr::TestReport.instance.getReq('New Req').get_child('Login').add(nil, "This is a skipped assertion")
+
+## JUNIT XSD
+
+http://llg.cubic.org/docs/junit/
 
 ## Development
 
@@ -32,11 +39,17 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Run unit tests
 
-bundle exec rake spec
+Run the unit tests:
+
+    $ bundle exec rake spec
+    
+    to run a single spec,
+    
+    $ rspec spec/tap_sec.rb
 
 ## Build
 
-bundle exec rake build
+    $ bundle exec rake build
 
 ## Contributing
 
