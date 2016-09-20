@@ -28,10 +28,11 @@ module Testmgr
       @metrics
     end
 
-    def add(rc, desc)
+    def add(rc, desc, sec=nil)
 
       puts __FILE__ + (__LINE__).to_s + " TestCase.add(#{rc}, #{desc})" if Testmgr::TestReport.instance.verbose
-      @assertions << { :rc => rc, :description => desc, :time => Time.now }
+
+      @assertions << { :rc => rc, :description => desc , :time => sec}
 
       if rc.nil?
         @metrics[:skipped]+=1
@@ -134,7 +135,7 @@ module Testmgr
     end
 
     # JUNIT
-    def tapPrint(className, doc, formatType='JUNIT')
+    def tapPrint(className, doc, seconds=nil)
 
     #  s="[requirement - #{parent.name}]:#{@test_id} - #{@description.to_s} : #{@metrics[:passed]}/#{@metrics[:total]} passed: #{calcResult().to_s}"
     #  if @id
@@ -148,7 +149,12 @@ module Testmgr
         ts = Nokogiri::XML::Node.new('testcase', doc)
         ts.set_attribute('classname', "#{className}.#{@test_id}")
         ts.set_attribute('name', a[:description])
-        ts.set_attribute('time', a[:time])
+        ts.set_attribute('time', a[:time].to_s)
+
+        if !seconds.nil?
+          ts.set_attribute('time', seconds)
+        end
+
 
         if a[:rc].nil?
           skipped=Nokogiri::XML::Node.new('skipped', ts)
@@ -164,7 +170,7 @@ module Testmgr
           raise "UNKNOWN_CLASS_Type: #{a}"
         end
 
-        doc.root.add_child(ts)
+        doc.add_child(ts)
         i+=1
       end
 
